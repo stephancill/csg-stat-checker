@@ -4,7 +4,8 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-requests = "*"
+selenium = "*"
+webdriver-manager = "*"
 
 [dev-packages]
 
