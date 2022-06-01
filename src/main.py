@@ -6,6 +6,16 @@ from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver.chromium.options import ChromiumOptions
 import time
 
+ranks = {
+    0: "none",
+    1:"S1",     2:"S2",     3:"S3",     4:"S4",     5:"SE",     6:"SEM",    # Silver
+    7:"GN1",    8:"GN2",    9:"GN3",    10:"GNM",                           # Gold Nova
+    11:"MG1",   12:"MG2",   13:"MGE",   14:"DMG",                           # Master Guardian       
+    15:"LE",    16:"LEM",                                                   # Legendary Eagle            
+    17:"SMFC",                                                              # Supreme
+    18:"GE"                                                                 # Global 
+}
+
 def steamid_to_commid(steamid):
     sid_split = steamid.split(':')
     commid = int(sid_split[2]) * 2
@@ -15,6 +25,34 @@ def steamid_to_commid(steamid):
 
     commid += 76561197960265728
     return commid
+
+def get_player(id, name, driver):
+    # TODO: Get player info
+    rating = 0
+    rank = 0
+    wins = 0
+    csgostats_url = f"https://csgostats.gg/player/{id}"
+    driver.get(csgostats_url)
+    print(csgostats_url)
+    try:
+        rating_el = driver.find_element(by=By.ID, value="rating")
+        rating_span = rating_el.find_element(by=By.TAG_NAME, value="span")
+        rating = rating_span.text 
+        rank_el = driver.find_element(by=By.CLASS_NAME, value="player-ranks")
+        
+        rank_img = rank_el.find_element(by=By.TAG_NAME, value="img")
+        rank = rank_img.get_attribute("src").split("/")[-1].split(".png")[0]
+
+        wins_el = driver.find_element(by=By.ID, value="competitve-wins")        
+        wins_span = wins_el.find_element(by=By.TAG_NAME, value="span")
+        
+        wins = wins_span.text
+    except:
+        print("rating not found")
+            
+    player = (name, id, rating, ranks[int(rank)], wins, csgostats_url)
+
+    return player
 
 def main():
     
@@ -41,30 +79,26 @@ def main():
         current_player_ids = [x[1] for x in players]
         for i, steam_id64 in enumerate(steam64_ids):
             if not steam_id64 in current_player_ids:
-                # TODO: Get player info
-                rating = 0
                 print("Connected:", names[i])
-                csgostats_url = f"https://csgostats.gg/player/{steam_id64}"
-                driver.get(csgostats_url)
-                try:
-                    rating_el = driver.find_element(by=By.ID, value="rating")
-                    rating_span = rating_el.find_element(by=By.TAG_NAME, value="span")
-                    rating = rating_span.text 
-                except:
-                    print("rating not found")
                         
-                player = (names[i], steam_id64, rating)
+                player = get_player(steam_id64, names[i], driver)
+                
                 print(player)
                 players.append(player)
                 time.sleep(1)
         # print("waiting", f"{len(players)}/10")
         time.sleep(1)
 
-    for i in range(len(names)):
-        print(names[i], csgostats_url)
+    for player in players:
+        print(player)
 
 if __name__ == "__main__":
     main()
+    # options = ChromiumOptions()
+    # options.add_argument("--disable-blink-features=AutomationControlled")
+    # driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)    
+
+    # print(get_player(76561198049532825, "", driver))
     
     
     
